@@ -1,0 +1,3 @@
+(library
+ (libraries fpath bos containers)
+ (name advent_lib))
