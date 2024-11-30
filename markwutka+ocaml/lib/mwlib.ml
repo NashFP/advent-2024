@@ -1,7 +1,8 @@
 let read_file filename =
-    Fpath.v filename |>
-    Bos.OS.File.read_lines |>
-    Result.get_ok
+  In_channel.with_open_text filename In_channel.input_lines
+
+let read_file_as_string filename =
+  In_channel.with_open_text filename In_channel.input_all
 
 let split_groups l =
     let f (acc,lists) l =
