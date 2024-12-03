@@ -1,9 +1,9 @@
 open Advent_lib
 open Mwlib
 
-let mul_regex = Str.regexp "mul[(]\\([0-9]+\\),\\([0-9]+\\)[)]"
-let do_regex = Str.regexp "do[(][)]"
-let dont_regex = Str.regexp "don't[(][)]"
+let mul_regex = Str.regexp "mul(\\([0-9]+\\),\\([0-9]+\\))"
+let do_regex = Str.regexp "do()"
+let dont_regex = Str.regexp "don't()"
 
 let day3 () =
   let text = read_file_as_string "data/day3.txt" in
