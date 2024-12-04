@@ -1,5 +1,4 @@
 open Advent_lib
-open Mwlib
 
 let space_regex = Str.regexp " +"
 
@@ -9,7 +8,7 @@ let split_line l =
   (List.hd parts, List.nth parts 1)
 
 let day1a () =
-  let lines = read_file("data/day1.txt") in
+  let lines = Mwlib.read_file("data/day1.txt") in
   let (col1, col2) = List.split (List.map split_line lines) in
   let col1_sorted = List.sort compare col1 in
   let col2_sorted = List.sort compare col2 in
@@ -51,7 +50,7 @@ let sum_occur l1 l2 =
   sum_loop l1 l2 0
 
 let day1b() =
-  let lines = read_file("data/day1.txt") in
+  let lines = Mwlib.read_file("data/day1.txt") in
   let (col1, col2) = List.split (List.map split_line lines) in
   let col1_sorted = List.sort compare col1 in
   let col2_sorted = List.sort compare col2 in

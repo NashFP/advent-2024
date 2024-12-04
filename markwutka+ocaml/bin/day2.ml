@@ -1,5 +1,4 @@
 open Advent_lib
-open Mwlib
 
 type dir = Up | Down
 
@@ -42,13 +41,13 @@ let is_good_with_dampener report =
 
   
 let day2a () =
-  let lines = read_file "data/day2.txt" in
+  let lines = Mwlib.read_file "data/day2.txt" in
   let reports = List.map split_line lines in
   let good_reports = List.filter is_good reports in
   Printf.printf "%d\n" (List.length good_reports)
 
 let day2b () =
-  let lines = read_file "data/day2.txt" in
+  let lines = Mwlib.read_file "data/day2.txt" in
   let reports = List.map split_line lines in
   let good_reports = List.filter is_good_with_dampener reports in
   Printf.printf "%d\n" (List.length good_reports);;

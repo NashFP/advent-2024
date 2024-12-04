@@ -15,9 +15,25 @@ let split_groups l =
       List.fold_left f ([],[])
       |> snd;;
 
+let pair x y = (x, y)
+
+let product l1 l2 =
+  let prod1 l x = List.map (pair x) l in                             
+  List.concat_map (prod1 l2) l1
+
+let rec all f l =
+  match l with
+  | [] -> true
+  | x :: rest -> if not (f x) then false else all f rest
+
+let rec any f l =
+  match l with
+  | [] -> false
+  | x :: rest -> if f x then true else any f rest
+
 let range f t =
   let rec range1 f t acc =
-    if f > t then
+    if f >= t then
       List.rev acc
     else
       range1 (f+1) t (f::acc)

@@ -1,5 +1,4 @@
 open Advent_lib
-open Mwlib
 
 let dirs = [(-1,-1); (0, -1); (1, -1); (-1, 0); (1, 0);
             (-1, 1); (0, 1); (1, 1) ]
@@ -53,7 +52,7 @@ let rec count_x_mas grid x y count =
     count_x_mas grid (x+1) y (count + (count_x_mas_pos grid x y))
 
 let day4 () =
-  let lines = read_file "data/day4.txt" in
+  let lines = Mwlib.read_file "data/day4.txt" in
   let grid = Array.of_list lines in
   let resulta = count_xmas grid 0 0 0 in
   let resultb = count_x_mas grid 1 1 0 in
