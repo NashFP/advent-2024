@@ -10,10 +10,8 @@ let parse_update u =
 (* Make a matrix of booleans indicating which pages must precede another *)
 let make_precedes_table parts =
   let precedes_table = Array.init_matrix 100 100 (fun _ _ -> false) in
-  let rec loop = function
-    | [] -> precedes_table
-    | (x,y) :: rest -> (precedes_table.(y).(x) <- true; loop rest) in
-  loop parts
+  List.iter (fun (x,y) -> precedes_table.(y).(x) <- true) parts;
+  precedes_table
 
 let is_good_update precedes_table update =
   let get_precedes m n = precedes_table.(m).(n) in
