@@ -55,38 +55,41 @@ let move_guard positions guard =
   let is_obstructed pos = get_pos pos == 16 in
   let is_invalid (x,y) =
     x < 0 || x >= Array.length positions.(0) || y < 0 || y >= Array.length positions in
-  let mark_position pos dir =
-    let is_unique = if get_pos pos == 0 then 1 else 0 in
-    (add_dir pos dir; is_unique) in
+  let mark_position pos dir unique mod_pos =
+    if get_pos pos == 0 then
+      (add_dir pos dir; (unique+1, pos :: mod_pos))
+    else
+      (unique, mod_pos) in
   let been_here (x,y) dir =
     (get_pos (x,y) land (dir_bit dir)) != 0 in
-  let rec loop (pos,dir) unique =
+  let rec clear_modified = function
+    | [] -> ()
+    | (x,y) :: rest -> (positions.(y).(x) <- 0; clear_modified rest) in
+  let rec loop (pos,dir) unique modified_positions =
     if been_here pos dir then
-      (0, true)
+      (clear_modified modified_positions;
+       (0, true))
     else
-      let next_unique = unique + mark_position pos dir in 
+      let (next_unique, updated_mods) = mark_position pos dir unique modified_positions in
       let next_pos = move_dir pos dir in
       if is_invalid next_pos then
-        (next_unique, false)
+        (clear_modified updated_mods;
+         (next_unique, false))
       else if is_obstructed next_pos then
         let next_dir = turn_right dir in
-        loop (pos, next_dir) next_unique
+        loop (pos, next_dir) next_unique updated_mods
       else
-        loop (next_pos, dir) next_unique
+        loop (next_pos, dir) next_unique updated_mods
   in
-  loop guard 0
+  loop guard 0 []
 
 let try_obstruction positions guard (x,y) =
-  let reset_val v = if v == 16 then 16 else 0 in
-  let reset_row a = (Array.map_inplace reset_val a; a) in
-  let reset_positions p = Array.map_inplace reset_row p in
   let is_guard_pos ((gx,gy),_) = gx == x && gy == y in
   let v = positions.(y).(x) in
   if v == 16 || is_guard_pos guard then
     false
   else
-    (reset_positions positions;
-     positions.(y).(x) <- 16;
+    (positions.(y).(x) <- 16;
      let (_, result) = move_guard positions guard in
      positions.(y).(x) <- 0;
      result)
