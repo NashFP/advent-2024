@@ -76,16 +76,19 @@ let move_guard positions guard =
   in
   loop guard 0
 
-let try_obstruction grid guard (x,y) =
+let try_obstruction positions guard (x,y) =
+  let reset_val v = if v == 16 then 16 else 0 in
+  let reset_row a = (Array.map_inplace reset_val a; a) in
+  let reset_positions p = Array.map_inplace reset_row p in
   let is_guard_pos ((gx,gy),_) = gx == x && gy == y in
-  let positions = Array.init_matrix (Array.length grid)
-                    (String.length grid.(0)) (make_map_entry grid) in
   let v = positions.(y).(x) in
   if v == 16 || is_guard_pos guard then
     false
   else
-    (positions.(y).(x) <- 16;
+    (reset_positions positions;
+     positions.(y).(x) <- 16;
      let (_, result) = move_guard positions guard in
+     positions.(y).(x) <- 0;
      result)
      
 let day6 () =
@@ -97,7 +100,7 @@ let day6 () =
   let (resulta,_) = move_guard positions guard in
   let all_positions = Mwlib.product (Mwlib.range 0 (String.length grid.(0)))
                         (Mwlib.range 0 (Array.length grid)) in
-  let resultb = List.length (List.filter (try_obstruction grid guard) all_positions) in
+  let resultb = List.length (List.filter (try_obstruction positions guard) all_positions) in
   Printf.printf "day6a = %d\nday6b = %d\n" resulta resultb;;
 
 day6 ();;
