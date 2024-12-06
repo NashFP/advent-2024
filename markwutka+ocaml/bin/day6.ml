@@ -10,20 +10,11 @@ let turn_right = function
   | Down -> Left
   | Left -> Up
 
-let dir_name = function
-  | Up -> "Up"
-  | Right -> "Right"
-  | Down -> "Down"
-  | Left -> "Left"
-
 let dir_bit = function
   | Up -> 1
   | Right -> 2
   | Down -> 4
   | Left -> 8
-
-let is_right v dir =
-  (v land (dir_bit (turn_right dir))) != 0
 
 let move_dir (x, y) dir =
   match dir with
@@ -109,4 +100,4 @@ let day6 () =
   let resultb = List.length (List.filter (try_obstruction grid guard) all_positions) in
   Printf.printf "day6a = %d\nday6b = %d\n" resulta resultb;;
 
-  
+day6 ();;
