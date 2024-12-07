@@ -1,5 +1,4 @@
 open Advent_lib
-open Option
 
 (* This implementation tries combinations of operators but quits as soon as it
    figures out that a particular operator won't work. To do this, we reverse the
@@ -49,14 +48,18 @@ let solve_eqn op_list (Eqn (orig_target, nums)) =
        let rec op_loop = function
          | [] -> 0
          | (op, can_func) :: op_rest ->
+            (* See if this op can be applied *)
             if can_func target n then
-              (* we can use this op, so apply it an see if that leads to a solution *)
+              (* we can use this op, so apply it and see if that leads to a solution *)
               let v = loop (op target n) rest in
               if v == 0 then
+                (* if this operator results in a failure, try the next operator *)
                 op_loop op_rest
               else
+                (* otherwise, this operator led to a successful value, return it *)
                 v
             else
+              (* if we can't apply this operator, just try the next one *)
               op_loop op_rest
        in
        op_loop op_list
@@ -64,7 +67,7 @@ let solve_eqn op_list (Eqn (orig_target, nums)) =
   loop orig_target (List.rev nums)
                       
     
-let day7a () =
+let day7 () =
   let lines = Mwlib.read_file "data/day7.txt" in
   let eqns = List.map parse_eqn lines in
   let ops_a = [((/), can_mul); ((-), can_add)] in
@@ -74,4 +77,5 @@ let day7a () =
   let solvedb = List.map (solve_eqn ops_b) eqns in
   let resultb = List.fold_left (+) 0 solvedb in
   Printf.printf "day7a = %d\nday7b = %d\n" resulta resultb;;
-  
+
+day7 ();;
