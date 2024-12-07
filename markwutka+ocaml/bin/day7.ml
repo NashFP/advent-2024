@@ -1,6 +1,22 @@
 open Advent_lib
 open Option
 
+(* This implementation tries combinations of operators but quits as soon as it
+   figures out that a particular operator won't work. To do this, we reverse the
+   list of numbers. Then the first number in the list is now the last number that
+   was used to generate the target. If the last operator was '*' then the target
+   must be evenly divisible by that number. Similarly, if the last operator was
+   || then the target's digits should end with that number.
+
+   So, to solve, we take the list of numbers and original target, as well as a
+   list of operators where each item in the operator list is actually a pair,
+   where the first item in the pair is the inverse of the operator (i.e. / for *,
+   - for +, uncat for cat) and the second is a function that returns true if the
+   current target can have that inverse operator applied.
+
+   Each time we try an operator, we apply its inverse to the target, and try the
+   next number in the list. *)
+
 type equation_type = Eqn of int * int list
 
 let eqn_regex = Str.regexp ": *"
@@ -11,16 +27,16 @@ let parse_eqn l =
                (String.split_on_char ' ' (List.nth parts 1)) in
   Eqn (int_of_string (List.hd parts), nums)
 
-let uncat a b =
-  let astr = string_of_int a in
-  let bstr = string_of_int b in
-  int_of_string (String.sub astr 0 (String.length astr - String.length bstr))
-
 let can_uncat a b =
-  let astr = string_of_int a in
-  let bstr = string_of_int b in
-  (String.length astr > String.length bstr) && String.ends_with ~suffix:bstr astr
+  let bpow = ceil (log10 (float_of_int b)) in
+  let bmod = int_of_float (10.0 ** bpow) in
+  (a mod bmod) == b
 
+let uncat a b =
+  let bpow = ceil (log10 (float_of_int b)) in
+  let bmod = int_of_float (10.0 ** bpow) in
+  a / bmod
+  
 let can_mul a b = a mod b == 0
 let can_add a b = a > b
 
@@ -34,6 +50,7 @@ let solve_eqn op_list (Eqn (orig_target, nums)) =
          | [] -> 0
          | (op, can_func) :: op_rest ->
             if can_func target n then
+              (* we can use this op, so apply it an see if that leads to a solution *)
               let v = loop (op target n) rest in
               if v == 0 then
                 op_loop op_rest
