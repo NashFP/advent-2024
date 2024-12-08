@@ -39,3 +39,9 @@ let range f t =
       range1 (f+1) t (f::acc)
   in
   range1 f t [];;
+
+let string_to_list s = List.of_seq (String.to_seq s)
+
+let rec gcd a b =
+  let m = a mod b in
+  if m == 0 then b else gcd b m
