@@ -51,8 +51,9 @@ let split_list lst =
 
 (* To compute the sum of block values with a particular length at a particular
    position, it would be block num * (pos + pos+1 + pos+2 ... pos+len-1)
-   This can be factored into block num * (pos*len) + sum 1..(len-1)),
-   or num * (pos * len + (len * (len-1)) / 2 *)          
+   This can be factored into block num * ((pos*len) + sum 1..(len-1)),
+   or num * (pos * len + (len * (len-1)) / 2)
+ *)          
 let block_sum_range pos len num =
   num * (len * pos + len * (len - 1) / 2)
 
