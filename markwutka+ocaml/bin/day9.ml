@@ -1,4 +1,5 @@
-open Advent_lib;;
+open Advent_lib
+open Option;;
 
 (* Day 9 was about optimizing a disk given a list of alternating block
    sizes and free space sizes, and then computing a checksum. The tricky
@@ -91,45 +92,34 @@ let compute_checksum_a block_sizes free_sizes =
               ((free_len - block_len, free_pos + block_len) :: free_rest)
               (checksum + block_sum_range free_pos block_len block_num)
   in
-  loop (List.rev block_sizes) free_sizes 0
+  loop (List.rev block_sizes) free_sizes 0;;
 
-(** Return the index of the first item in l where f returns true *) 
-let index_of f l =
-  let rec loop l pos =
+(* Find the first free block matching the required size, and return the
+   position of the free block and the remaining list of free blocks. If
+   the free block is longer than the required length, it is left in the
+   list but shorted to its remaining space
+ *)
+let get_free req_size pos l =
+  let rec loop l pre =
     match l with
-    | [] -> ((-1,-1), -1)
-    | x :: rest -> if f x then
-                     (x, pos)
-                   else
-                     loop rest (pos+1)
-  in
-  loop l 0
-
-(** Drop the item at position index from the list *)
-let drop_at index l =
-  let rec loop l pre pos =
-    match l with
-    | [] -> l
-    | x :: rest -> if pos == index then List.rev_append pre rest
-                   else loop rest (x::pre) (pos+1)
-  in
-  loop l [] 0
-
-(** Shorten the free list item at position index by the specified amount *)
-let shorten_at index amount l =
-  let rec loop l pre pos =
-    match l with
-    | [] -> l
+    | [] -> None
     | (free_len, free_pos) :: free_rest ->
-       if pos == index then
-         List.rev_append pre ((free_len-amount, free_pos+amount)::free_rest)
+       if free_len == req_size && free_pos < pos then
+         (* If it is the exact size, just remove the free block from the list *)
+         Some (free_pos, List.rev_append pre free_rest)
+       else if free_len > req_size && free_pos < pos then
+         (* If the free block is longer than the required size, keep it in the
+            list but adjust its size and pos *)
+         Some (free_pos,
+               List.rev_append pre
+                 ((free_len-req_size, free_pos+req_size) :: free_rest))
        else
-         loop free_rest ((free_len, free_pos) :: pre) (pos+1)
+         (* Otherwise, try the next block *)
+         loop free_rest ((free_len, free_pos) :: pre)
   in
-  loop l [] 0
-
+  loop l []
+  
 let compute_checksum_b block_sizes free_sizes =
-  let can_fit block_size (size,_) = size >= block_size in
   let rec loop block_sizes free_sizes checksum =
     match block_sizes with
     | [] -> checksum
@@ -139,24 +129,14 @@ let compute_checksum_b block_sizes free_sizes =
          loop block_rest free_sizes
            (checksum + block_sum_range block_pos block_len block_num)
        else
-         (* Find the first free space at least as large as the block *)
-         let ((free_len, free_pos), idx) =
-           index_of (can_fit block_len) free_sizes in
-
-         (* Make sure the free space is to the left of the block *)
-         if idx >= 0 && free_pos < block_pos then
-           if free_len == block_len then
-             (* If the sizes match exactly, from the free space from the list *)
-             loop block_rest (drop_at idx free_sizes)
-               (checksum + block_sum_range free_pos block_len block_num)
-           else
-             (* Otherwise, shorten the free space in-place *)
-             loop block_rest (shorten_at idx block_len free_sizes)
-               (checksum + block_sum_range free_pos block_len block_num)
-         else
-           (* If no matching free space is found, leave the block in place*)
-           loop block_rest free_sizes
-             (checksum + block_sum_range block_pos block_len block_num)
+         match get_free block_len block_pos free_sizes with
+         | None ->
+            (* If no matching free space is found, leave the block in place*)
+            loop block_rest free_sizes
+              (checksum + block_sum_range block_pos block_len block_num)
+         | Some (free_pos, free_rest) ->
+            loop block_rest free_rest
+              (checksum + block_sum_range free_pos block_len block_num)
   in
   loop (List.rev block_sizes) free_sizes 0          
 
