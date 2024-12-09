@@ -34,10 +34,6 @@ let make_grid lines width height =
       (Mwlib.range 0 width) in
   List.fold_left2 make_row CharMap.empty lines (Mwlib.range 0 height)
 
-let pair_product pairs =
-  let is_different ((x1,y1),(x2,y2)) = x1 != x2 || y1 != y2 in
-  List.filter is_different (Mwlib.product pairs pairs)
-
 let try_pair width height set (p1,p2) =
   let is_valid (x,y) = x >= 0 && x < width && y >= 0 && y < height in
   let pair_diff = sub_pair p2 p1 in
@@ -68,7 +64,7 @@ let try_pair_b width height set (p1,p2) =
   let p1_ext = extend width height p1 (reduce (sub_pair p1 p2)) in
   let p2_ext = extend width height p1 (reduce (sub_pair p2 p1)) in
   let add_pair set p = PairsSet.add p set in
-  List.fold_left add_pair set (p1_ext @ p2_ext)
+  List.fold_left add_pair set (p1 :: p2 :: p1_ext @ p2_ext)
 
 let add_pairs_b width height pairs =
   List.fold_left (try_pair_b width height) PairsSet.empty pairs
@@ -79,7 +75,7 @@ let day8 () =
   let height = List.length lines in
   let width = List.length (List.hd lines) in
   let grid = make_grid lines width height in
-  let pairs = List.concat (List.map pair_product
+  let pairs = List.concat (List.map (Mwlib.choose_pairs)
                              (List.map snd (CharMap.to_list grid))) in
   let pairs_set = add_pairs width height pairs in
   let resulta = List.length (PairsSet.elements pairs_set) in
