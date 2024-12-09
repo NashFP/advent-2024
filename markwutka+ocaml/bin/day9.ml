@@ -47,15 +47,14 @@ let split_list lst =
                      loop true rest left_acc ((x,pos) :: right_acc)
                        (pos+x) block_num
   in
-  loop true lst [] [] 0 0
+  loop true lst [] [] 0 0;;
 
+(* To compute the sum of block values with a particular length at a particular
+   position, it would be block num * (pos + pos+1 + pos+2 ... pos+len-1)
+   This can be factored into block num * (pos*len) + sum 1..(len-1)),
+   or num * (pos * len + (len * (len-1)) / 2 *)          
 let block_sum_range pos len num =
-  let rec loop pos len num sum =
-    if len == 0 then sum
-    else
-      loop (pos+1) (len-1) num (sum + pos * num)
-  in
-  loop pos len num 0
+  num * (len * pos + len * (len - 1) / 2)
 
 let compute_checksum_a block_sizes free_sizes =
   let rec loop block_sizes free_sizes checksum =
