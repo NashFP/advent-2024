@@ -67,21 +67,33 @@ let compute_checksum_a block_sizes free_sizes =
                  (checksum + block_sum_range block_pos block_len block_num)
        | (free_len, free_pos) :: free_rest ->
           if free_pos > block_pos then
+          (* If all the free spaces are to the right of the current block,
+             clear out the free list and just process the rest of the blocks *)
             loop block_rest []
               (checksum + block_sum_range block_pos block_len block_num)
           else if free_len == block_len then
+            (* If the sizes exactly match, remove both the block and the free
+               space from their lists, and compute the block checksum as
+               if it is in the free space *)
             loop block_rest free_rest
               (checksum + block_sum_range free_pos block_len block_num)
           else if free_len < block_len then
+            (* If the free size is smaller than the block, remove the
+               free size from the list and shorten the block by the
+               size of the free size *)
             loop ((block_len - free_len, block_pos, block_num)::block_rest)
               free_rest (checksum + block_sum_range free_pos free_len block_num)
           else
+            (* If the free size is larger than the block, remove the
+               block from the list, and shorten the free space by the
+               size of the block *)
             loop block_rest
               ((free_len - block_len, free_pos + block_len) :: free_rest)
               (checksum + block_sum_range free_pos block_len block_num)
   in
-  loop (List.rev block_sizes) free_sizes 0          
+  loop (List.rev block_sizes) free_sizes 0
 
+(** Return the index of the first item in l where f returns true *) 
 let index_of f l =
   let rec loop l pos =
     match l with
@@ -93,6 +105,7 @@ let index_of f l =
   in
   loop l 0
 
+(** Drop the item at position index from the list *)
 let drop_at index l =
   let rec loop l pre pos =
     match l with
@@ -102,6 +115,7 @@ let drop_at index l =
   in
   loop l [] 0
 
+(** Shorten the free list item at position index by the specified amount *)
 let shorten_at index amount l =
   let rec loop l pre pos =
     match l with
@@ -121,19 +135,26 @@ let compute_checksum_b block_sizes free_sizes =
     | [] -> checksum
     | (block_len, block_pos, block_num) :: block_rest ->
        if List.is_empty free_sizes then
+         (* If there are no free spaces left, just process the blocks *)
          loop block_rest free_sizes
            (checksum + block_sum_range block_pos block_len block_num)
        else
+         (* Find the first free space at least as large as the block *)
          let ((free_len, free_pos), idx) =
            index_of (can_fit block_len) free_sizes in
+
+         (* Make sure the free space is to the left of the block *)
          if idx >= 0 && free_pos < block_pos then
            if free_len == block_len then
+             (* If the sizes match exactly, from the free space from the list *)
              loop block_rest (drop_at idx free_sizes)
                (checksum + block_sum_range free_pos block_len block_num)
            else
+             (* Otherwise, shorten the free space in-place *)
              loop block_rest (shorten_at idx block_len free_sizes)
                (checksum + block_sum_range free_pos block_len block_num)
          else
+           (* If no matching free space is found, leave the block in place*)
            loop block_rest free_sizes
              (checksum + block_sum_range block_pos block_len block_num)
   in
