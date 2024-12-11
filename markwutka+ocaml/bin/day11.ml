@@ -1,3 +1,12 @@
+(* In the initial solution to part A, I just generated each successive
+   list of numbers, which wasn't bad. But, when part B asked for the
+   process to be run 75 times, it blew up quickly.
+
+   I then rewrote the blink process so that instead of just a list of
+   numbers, it was a map of number to count. Doing that allowed it to
+   still do the loop 75 times in less than a tenth of a second.
+ *)
+
 open Advent_lib
 open Option
 
