@@ -75,3 +75,4 @@ let day10 () =
   let resultb = List.fold_left (+) 0 num_trailsb in
   Printf.printf "day10a = %d\nday10b = %d\n" resulta resultb;;
   
+  day10 ();;

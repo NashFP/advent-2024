@@ -15,6 +15,7 @@ depends: [
   "fpath"
   "containers"
   "bos"
+  "zarith"
   "odoc" {with-doc}
 ]
 build: [

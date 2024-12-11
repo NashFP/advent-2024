@@ -19,7 +19,7 @@
  (name markwutka_ocaml)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune fpath containers bos)
+ (depends ocaml dune zarith)
  (tags
   (topics "to describe" your project)))
 
