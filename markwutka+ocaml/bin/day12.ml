@@ -52,7 +52,10 @@ let get_groups grid =
       (visited, group) in
   let make_group (visited, groups) (coord,ch) =
     let (v_new, group) = try_visit ch (visited, []) coord in
-    (v_new, group :: groups) in
+    if List.is_empty group then
+      (v_new, groups)
+    else
+      (v_new, group :: groups) in
   snd (List.fold_left make_group (PairsSet.empty, []) (Mwlib.matrix_to_list grid))
 
 let get_group_value grid group =
