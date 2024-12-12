@@ -79,3 +79,11 @@ let rec permute l =
   | _ -> loop l [] []
      
 let digit_to_int ch = Char.code ch - Char.code '0'
+
+let matrix_dim m = (Array.length m, Array.length m.(0))
+let matrix_to_list m =
+  let (width,height) = matrix_dim m in
+  let make_pair (x,y) = ((x,y),m.(x).(y)) in
+  List.map make_pair (product (range 0 width) (range 0 height))
+                         
+  

@@ -87,10 +87,7 @@ let get_group_value_b grid group =
      *)         
     let outer_corner_value ((x1,y1),(x2,y2)) =
       if (not (is_valid (x1,y1)) || ch != grid.(x1).(y1)) &&
-           (not (is_valid (x2,y2)) || ch != grid.(x2).(y2)) then
-        1
-      else
-        0
+           (not (is_valid (x2,y2)) || ch != grid.(x2).(y2)) then 1 else 0
     in
     (* For an inner corner, look for valid adjacent squares in two directions
        and an invalid one diagonally across:
@@ -98,7 +95,6 @@ let get_group_value_b grid group =
        Oo    oO     oO     Oo
                     OX     XO
      *)
-       
     let inner_corner_value ((x1,y1),(x2,y2),(x3,y3)) =
       if (is_valid (x1,y1) && is_valid (x2,y2) &&
             ch == grid.(x1).(y1) && ch == grid.(x2).(y2)) &&
