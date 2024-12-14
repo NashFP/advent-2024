@@ -85,6 +85,4 @@ let day13 () =
   let resultb = List.fold_left (+) 0 (List.map cost solutions_b) in
   Printf.printf "day13a = %d\nday13b = %d\n" resulta resultb;;
     
-                             
-
-                                
+day13 ();;                            
