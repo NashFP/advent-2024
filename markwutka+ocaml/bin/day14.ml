@@ -3,13 +3,16 @@
    to keep it in range (I had to make a modulo func that always
    returned a positive number).
 
-   For the second half, I converted the robot grid to a list of
-   strings and looked for a long sequence of X's. *)
+   For part B, I started off looking at manual frames, and
+   noticed something recurring every 103 frames, starting at
+   frame 1, and something else recurring every 101 frames
+   starting at 48. I just made a function to find out when
+   those two would intersect at the same frame and that
+   was the answer. *)
 
 open Advent_lib
 
 let line_regex = Str.regexp "p=\\([0-9]*\\),\\([0-9]*\\) v=\\([-0-9]*\\),\\([-0-9]*\\)"
-let chain_regex = Str.regexp ".*XXXXXXXXXX"
 
 let parse_line line =
   let _ = Str.search_forward line_regex line 0 in
@@ -38,21 +41,6 @@ let safety_score robots =
       quadrant_sum ((0, 52),(49, 102)) robots *
         quadrant_sum ((51, 52), (100, 102)) robots
 
-let has_long_chain (x_bound, y_bound) robots =
-  let grid = Array.make_matrix x_bound y_bound ' ' in
-  let set_robot grid ((x,y),_) = grid.(x).(y) <- 'X' in
-  let array_to_list grid = List.of_seq (Array.to_seq grid) in
-  let array_to_string row = String.of_seq (Array.to_seq row) in
-  let make_printable grid = List.map array_to_string (array_to_list grid) in
-  let rec find_long lst =
-    match lst with
-    | [] -> false
-    | x :: rest -> if Str.string_match chain_regex x 0 then true
-                   else find_long rest
-  in
-  List.iter (set_robot grid) robots;
-  find_long (make_printable grid)
-
 let print_grid (x_bound, y_bound) robots =
   let grid = Array.make_matrix x_bound y_bound ' ' in
   let set_robot grid ((x,y),_) = grid.(x).(y) <- 'X' in
@@ -64,16 +52,17 @@ let print_grid (x_bound, y_bound) robots =
   List.iter (set_robot grid) robots;
   print (make_printable grid)
 
-let rec do_find bounds moves robots =
-  let moved_robots = List.map (move_robot moves bounds) robots in
-  if has_long_chain bounds moved_robots then
-    moves
-  else
-    do_find bounds (moves+1) robots
-
 let print_at bounds moves robots =
   let moved_robots = List.map (move_robot moves bounds) robots in
   print_grid bounds moved_robots
+
+let rec find_int move_103 move_101 =
+  if move_103 == move_101 then
+    move_103
+  else if move_103 < move_101 then
+    find_int (move_103 + 103) move_101
+  else
+    find_int move_103 (move_101 + 101)
 
 let day14a () =
   let lines = Mwlib.read_file "data/day14.txt" in
@@ -85,7 +74,7 @@ let day14a () =
 let day14b () =
   let lines = Mwlib.read_file "data/day14.txt" in
   let robots = List.map parse_line lines in
-  let resultb = do_find (101,103) 1 robots in
+  let resultb = find_int 1 48 in
   print_at (101,103) resultb robots;
   Printf.printf "day14b = %d\n" resultb;;
   
