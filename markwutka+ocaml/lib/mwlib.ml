@@ -31,6 +31,23 @@ let rec any f l =
   | [] -> false
   | x :: rest -> if f x then true else any f rest
 
+let rec drop n l =
+  if n == 0 then l
+  else match l with
+       | [] -> []
+       | _ :: rest -> drop (n-1) rest
+
+let take n l =
+  let rec loop n l acc =
+    if n == 0 then
+      List.rev acc
+    else
+      match l with
+      | [] -> List.rev acc
+      | x :: rest -> loop (n-1) rest (x::acc)
+  in
+  loop n l []
+
 let range f t =
   let rec range1 f t acc =
     if f >= t then
