@@ -7,7 +7,10 @@
    list of blocked, but it turned out to be much faster to start
    at the end and remove them since the blocking byte turned out
    to be pretty far down the list, and once the path is blocked
-   the search returns faster
+   the search returns faster.
+
+   It turns out, I can do part B much faster by using a binary
+   search. It looks like the speedup is at least 5x.
  *)
 
 open Advent_lib
@@ -53,21 +56,26 @@ let traverse (x,y) (max_x,max_y) blocked =
   in
   loop (PairsSet.add (x,y) PairsSet.empty) 0 (PairsSet.add (x,y) PairsSet.empty)
 
-let rec find_first_blocker (max_x, max_y) blocked num_blocks =
-  let result = traverse (0,0) (max_x,max_y)
-                 (PairsSet.of_list (Mwlib.take num_blocks blocked)) in
-  if result >= 0 then
-    List.hd (Mwlib.drop num_blocks blocked)
+let rec find_first_blocker (max_x, max_y) blocked min_blocks max_blocks =
+  let mid = (min_blocks + max_blocks) / 2 in
+  let result_mid = traverse (0,0) (max_x,max_y)
+                     (PairsSet.of_list (Mwlib.take mid blocked)) in
+  if result_mid >= 0 then
+    let result_mid1 = traverse (0,0) (max_x,max_y)
+                        (PairsSet.of_list (Mwlib.take (mid+1) blocked)) in
+    if result_mid1 < 0 then
+      List.hd (Mwlib.drop mid blocked)
+    else
+      find_first_blocker (max_x, max_y) blocked mid max_blocks
   else
-    find_first_blocker (max_x, max_y) blocked (num_blocks-1)
-  
+    find_first_blocker (max_x, max_y) blocked min_blocks mid
   
 let day18 () =
   let lines = Mwlib.read_file "data/day18.txt" in
   let bytes = List.map parse_pair lines in
   let blocked = PairsSet.of_list (Mwlib.take 1024 bytes) in
   let resulta = traverse (0,0) (70,70) blocked in
-  let (xb,yb) = find_first_blocker (70,70) bytes (List.length bytes) in
+  let (xb,yb) = find_first_blocker (70,70) bytes 0 (List.length bytes) in
   Printf.printf "day18a = %d\nday18b = %d,%d\n" resulta xb yb;;
 
 day18 ();;
