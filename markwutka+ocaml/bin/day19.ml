@@ -32,7 +32,7 @@ let can_form towels orig_pattern =
          (update_count num_combos) patterns
     else
       patterns in
-  let make_next_pattern patterns (pattern,num_combos) =
+  let make_next_pattern pattern num_combos patterns =
     List.fold_left (add_towel pattern num_combos) patterns towels in
   let rec loop patterns =
     let num_patterns = StringMap.cardinal patterns in
@@ -46,8 +46,7 @@ let can_form towels orig_pattern =
           StringMap.add "" (StringMap.find "" patterns) StringMap.empty
         else
           StringMap.empty in
-      loop (List.fold_left make_next_pattern next_patterns
-              (StringMap.to_list patterns))
+      loop (StringMap.fold make_next_pattern patterns next_patterns)
   in
   loop (StringMap.add orig_pattern 1 StringMap.empty)
 
