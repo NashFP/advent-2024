@@ -1,11 +1,11 @@
 (* My basic strategy here is to take a pattern and the
-   set of towels, see if the pattern ends with any of the
+   set of towels, see if the pattern starts with any of the
    towels and make a new set of patterns with those towels
-   removed from the end.
+   removed from the front.
 
    If the patterns are just a list, there are numerous
-   duplicates. Switching to a set, I was able to find the
-   patterns that could be produced, but then in order
+   duplicates. Switching to a set, I was able to eliminate the
+   duplicate patterns that could be produced, but then in order
    to count the number of combinations, I turned the set
    into a map where the key is the pattern and the value is
    the number of ways I got to that pattern.
@@ -26,9 +26,9 @@ let can_form towels orig_pattern =
     | None -> Some num_combos
     | Some n -> Some (num_combos + n) in
   let add_towel pattern num_combos patterns towel =
-    if String.ends_with ~suffix:towel pattern then
+    if String.starts_with ~prefix:towel pattern then
       StringMap.update
-         (String.sub pattern 0 (String.length pattern - String.length towel))
+         (String.sub pattern (String.length towel) (String.length pattern - String.length towel))
          (update_count num_combos) patterns
     else
       patterns in
