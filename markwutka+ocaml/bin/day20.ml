@@ -61,7 +61,7 @@ let make_path lines =
      of 1, and set the next len to 2 *)
   loop (sx,sy) (-1,-1) [(sx,sy,1)] 2
 
-let cheat_list max_pico min_cheat path =
+let cheat_count max_pico min_cheat path =
   (* Since the cheat paths can cross both walls and existing paths,
      we can just use Manhattan dist for the distance (|x0-x1| + |y0-y1|). *)
   let grid_dist (x0,y0) (x1,y1) =
@@ -91,8 +91,8 @@ let cheat_list max_pico min_cheat path =
 let day20 () =
   let lines = Array.of_list (Mwlib.read_file "data/day20.txt") in
   let path = make_path lines in
-  let resulta = cheat_list 2 100 path in
-  let resultb = cheat_list 20 100 path in
+  let resulta = cheat_count 2 100 path in
+  let resultb = cheat_count 20 100 path in
   Printf.printf "day20a = %d\nday20b = %d\n" resulta resultb;;
   
 day20 ();;
