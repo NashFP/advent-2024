@@ -5,7 +5,7 @@
 
   When looking for the cheats, a cheat can actually
   cross an existing part of the path, so you can just
-  use cartesian distance for the distance between any
+  use Manhattan distance for the distance between any
   two points along the path.
  *)
 
