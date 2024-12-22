@@ -6,7 +6,11 @@
    changes that would yield the highest total count.
    To do this, I created a map whose key is four
    numbers and whose value is the number of bananas
-   in the fourth of those rounds.
+   in the fourth of those rounds. Then I was about
+   to get about a 20% speedup by turning the keys
+   into integers. Then, I switched to an array,
+   which led to a more imperative style, but ran
+   in about 1.5 second instead of 5.
 
    The only extra trick is that you can only look at
    the first occurrence of a sequence, so I had to
@@ -15,21 +19,7 @@
  *)
 
 open Advent_lib
-
-module IntQuads =
-  struct
-    type t = int * int * int * int
-    let compare (a0,b0,c0,d0) (a1,b1,c1,d1) =
-      match Stdlib.compare a0 a1 with
-        0 -> (match Stdlib.compare b0 b1 with
-              | 0 -> (match Stdlib.compare c0 c1 with
-                      | 0 -> Stdlib.compare d0 d1
-                      | c -> c)
-              | c -> c)
-      | c -> c
-  end
-
-module QuadsMap = Map.Make(IntQuads)
+open Option
 
 let do_round n =
   let n64 = (n lxor (n lsl 6)) land 16777215 in
@@ -56,28 +46,42 @@ let make_map_keys l =
   let rec loop l acc =
     match l with
     | (a,_)::(b,bx)::(c,cx)::(d,e)::rest ->
-       loop ((b,bx)::(c,cx)::(d,e)::rest) (((a,b,c,d),e) :: acc)
+       loop ((b,bx)::(c,cx)::(d,e)::rest) (((a+10)*8000+(b+10)*400+(c+10)*20+d+10,e) :: acc)
     | _ -> List.rev acc
   in
   loop l []
 
 let make_map l =
   let add map (key,v) =
-    if not (QuadsMap.mem key map) then
-      QuadsMap.add key v map
+    if is_none map.(key) then
+      (map.(key) <- Some v; map)
     else
       map
   in
-  List.fold_left add QuadsMap.empty (make_map_keys l)
+  List.fold_left add (Array.make 160000 None) (make_map_keys l)
 
-let merge_vals _ aopt bopt =
-  match (aopt,bopt) with
-  | (None,None) -> None
-  | (Some a, None) -> Some a
-  | (None,Some b) -> Some b
-  | (Some a, Some b) -> Some (a+b)
+let merge_maps m1 m2 =
+  let rec merge_at n =
+    if is_none m1.(n) then
+      m1.(n) <- m2.(n)
+    else if is_some m2.(n) then
+      m1.(n) <- Some ((get m1.(n)) + (get m2.(n)));
+    if n == 0 then m1
+    else merge_at (n-1)
+  in
+  merge_at 159999
 
-let max_val a (_,b) = max a b
+  
+let max_val map =
+  let rec try_mapval n m =
+    if n < 0 then m
+    else
+    match map.(n) with
+    | None -> try_mapval (n-1) m
+    | Some x -> if x > m then try_mapval (n-1) x
+      else try_mapval (n-1) m
+  in
+  try_mapval 159999 0
 
 let day22 () =
   let lines = Mwlib.read_file "data/day22.txt" in
@@ -86,8 +90,8 @@ let day22 () =
                   (List.map (do_n_rounds 2000) nums) in
   let digits = List.map (rounds_digits 2000) nums in
   let maps = List.map make_map digits in
-  let map_b = List.fold_left (QuadsMap.merge merge_vals) QuadsMap.empty maps in
-  let resultb = List.fold_left max_val 0 (QuadsMap.to_list map_b) in
+  let map_b = List.fold_left merge_maps (List.hd maps) (List.tl maps) in
+  let resultb = max_val map_b in
   Printf.printf "day22a = %d\nday22b = %d\n" resulta resultb;;
 
 day22 ();;
