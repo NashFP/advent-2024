@@ -15,18 +15,8 @@ module StringKey =
     let compare = String.compare
   end
 
-module StringIntKey =
-struct
-  type t = string * int
-  let compare (s0,i0) (s1,i1) =
-    match String.compare s0 s1 with
-    | 0 -> Stdlib.compare i0 i1
-    | c -> c
-end
-
 module StringSet = Set.Make(StringKey)
 module StringMap = Map.Make(StringKey)
-module StringIntMap = Map.Make(StringIntKey)
     
 let add_to_adj map pair =
   let update v adj_opt =
