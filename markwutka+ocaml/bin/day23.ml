@@ -130,4 +130,4 @@ let day23 () =
   let resultb = max_group (0,"") groups in
   Printf.printf "day23a = %d\nday23b = %s\n" resulta resultb;;
  
-
+day23 ();;
