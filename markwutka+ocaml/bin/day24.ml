@@ -195,7 +195,7 @@ let day24 () =
   let max_n = (List.length (List.filter is_output (StringMap.to_list circuit))) - 1 in
   let (_, corrections) = repair max_n circuit in
   let correction_str = String.concat ","
-      (StringSet.to_list (StringSet.of_list corrections)) in
+      (List.sort String.compare corrections) in
   Printf.printf "day24a = %d\nday24b = %s\n" resulta correction_str;;
 
 day24 ();;
