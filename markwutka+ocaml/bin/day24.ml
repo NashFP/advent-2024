@@ -153,19 +153,13 @@ let rec repair circuit corrections expected name =
           else
             repair circuit corrections right gate_right
         else if matches circuit right gate_right then
-          if matches circuit left gate_left then
-            (circuit, corrections)
-          else
-            repair circuit corrections left gate_left
+          repair circuit corrections left gate_left
         else if matches circuit left gate_right then
           if matches circuit right gate_left then
             (circuit, corrections)
           else
             repair circuit corrections right gate_left
         else if matches circuit right gate_left then
-          if matches circuit left gate_right then
-            (circuit, corrections)
-          else
             repair circuit corrections left gate_right
         else
           (match (find_match circuit expected) with

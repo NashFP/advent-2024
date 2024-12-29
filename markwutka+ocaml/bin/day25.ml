@@ -29,3 +29,5 @@ let day25 () =
   let (keys, locks) = List.fold_left parse_group ([],[]) groups in
   let resulta = List.length (List.filter fit (Mwlib.product keys locks)) in
   Printf.printf "day25a = %d\n" resulta;;
+
+day25 ();;
