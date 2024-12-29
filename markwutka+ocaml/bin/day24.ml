@@ -135,6 +135,15 @@ let find_match circuit expected =
   else
     Some (fst (List.hd matched))
 
+let replace_with_match circuit corrections name expected =
+  match find_match circuit expected with
+  | None -> raise (Err ("can't find match for " ^ name))
+  | Some matched_name ->
+    let old_top = StringMap.find name circuit in
+    let old_match = StringMap.find matched_name circuit in
+    (StringMap.add name old_match (StringMap.add matched_name old_top circuit),
+     (name :: matched_name :: corrections))
+
 (** repair looks for circuits that don't match their expected value,
     and when it finds one, it searches the circuits for the expected
     value and then swaps the two values and records the names of the
@@ -162,22 +171,9 @@ let rec repair circuit corrections expected name =
         else if matches circuit right gate_left then
             repair circuit corrections left gate_right
         else
-          (match (find_match circuit expected) with
-           | None -> raise (Err ("can't find match for " ^ name))
-           | Some matched_name ->
-             let old_top = StringMap.find name circuit in
-             let old_match = StringMap.find matched_name circuit in
-             (StringMap.add name old_match (StringMap.add matched_name old_top circuit),
-              (name :: matched_name :: corrections)))
+          replace_with_match circuit corrections name expected
       else
-        (match (find_match circuit expected) with
-        | None -> raise (Err ("can't find match for " ^ name))
-        | Some matched_name ->
-          let old_top = StringMap.find name circuit in
-          let old_match = StringMap.find matched_name circuit in
-          (StringMap.add name old_match (StringMap.add matched_name old_top circuit),
-           (name :: matched_name :: corrections)))
-                    
+        replace_with_match circuit corrections name expected
     | _ -> (circuit, corrections)
           
 let repair_n max_n (circuit,corrections) n =               
