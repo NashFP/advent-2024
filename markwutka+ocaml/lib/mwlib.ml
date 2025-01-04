@@ -104,3 +104,9 @@ let matrix_to_list m =
   List.map make_pair (product (range 0 width) (range 0 height))
                          
   
+let factorial n =
+  let rec loop n acc =
+    if n < 2 then acc
+    else loop (n-1) (n * acc)
+  in
+  loop n 1
