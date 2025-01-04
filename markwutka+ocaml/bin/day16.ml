@@ -3,7 +3,11 @@
    where the map is keyed/order by path_cost,x,y,direction and the
    map values are pairs of the squares on any path to this point with
    the same cost, and the visited squares for this path.
-   It takes probably 5-10 minutes to run. *)
+   I had originally done the visited map wrong where it was included
+   in each item in the priority queue, which meant it visited the same
+   locations many times. Fixing that changed the runtime from 5-6 minutes
+   to 0.04 seconds.
+*)
 
 open Advent_lib
 
@@ -94,8 +98,8 @@ let find_start grid =
   List.hd (List.filter (fun (x,y) -> grid.(y).[x] == 'S')
              (Mwlib.product (Mwlib.range 0 width) (Mwlib.range 0 height)))
 
-let rec find_path width height grid prio =
-  let ((x,y,path_cost,dir),(path,visited)) = PriorityMap.min_binding prio in
+let rec find_path width height grid prio visited =
+  let ((x,y,path_cost,dir),path) = PriorityMap.min_binding prio in
   let new_prio = PriorityMap.remove (x,y,path_cost,dir) prio in
   let new_visited = IntDirSet.add (x,y,dir) visited in
   let is_valid (x,y) = x >= 0 && x < width && y >= 0 && y < height &&
@@ -105,11 +109,11 @@ let rec find_path width height grid prio =
     if is_valid (new_x,new_y) && not (IntDirSet.mem (new_x,new_y,next_dir) new_visited) then
       match PriorityMap.find_opt (new_x,new_y,next_cost,next_dir) prio with
       | None -> PriorityMap.add (new_x,new_y,next_cost,next_dir)
-                                 (PairsSet.add (new_x,new_y) path, new_visited) prio
-      | Some (old_path,_) ->
+                                 (PairsSet.add (new_x,new_y) path) prio
+      | Some old_path ->
         PriorityMap.add (new_x,new_y,next_cost,next_dir)
           (PairsSet.add (new_x,new_y)
-             (PairsSet.add_seq (PairsSet.to_seq path) old_path), new_visited) prio
+             (PairsSet.add_seq (PairsSet.to_seq path) old_path)) prio
     else
       prio
   in
@@ -118,7 +122,7 @@ let rec find_path width height grid prio =
   else
     find_path width height grid
       (List.fold_left try_dir new_prio [(dir,path_cost+1);(turn_left dir, path_cost+1001);
-                                        (turn_right dir, path_cost+1001)])
+                                        (turn_right dir, path_cost+1001)]) new_visited
 
 let day16 () =
   let grid = Array.of_list (Mwlib.read_file "data/day16.txt") in
@@ -127,7 +131,7 @@ let day16 () =
   let height = Array.length grid in
   let (resulta,resultb) = find_path width height grid
       (PriorityMap.add (start_x,start_y,0,East)
-         (PairsSet.empty, IntDirSet.empty) PriorityMap.empty) in
+         PairsSet.empty PriorityMap.empty) IntDirSet.empty in
   Printf.printf "day16a = %d\nday16b = %d\n" resulta resultb;;
 
 day16 ();;
