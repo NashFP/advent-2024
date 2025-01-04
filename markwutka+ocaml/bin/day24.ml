@@ -19,7 +19,6 @@ module StringKey =
   end
 
 module StringMap = Map.Make(StringKey)
-module StringSet = Set.Make(StringKey)
 
 type op_type = AND | OR | XOR
 type input_source = X | Y
@@ -149,53 +148,50 @@ let replace_with_match circuit corrections name expected =
     value and then swaps the two values and records the names of the
     two swapped items *)
 let rec repair circuit corrections expected name =
-  if matches circuit expected name then
-    (circuit,corrections)
-  else
-    let node = StringMap.find name circuit in
-    match (expected, node) with
-    | (TreeGate (op,left,right), Gate (gate_op, gate_left, gate_right)) ->
-      if op == gate_op then
-        if matches circuit left gate_left then
-          if matches circuit right gate_right then
-            (* If the left and right match, nothing to change *)
-            (circuit, corrections)
-          else
-            (* The left was good, but the right didn't match, find
-               what needs to be repair in the right tree *)
-            repair circuit corrections right gate_right
-        else if matches circuit right gate_right then
-          (* We already know that the left didn't match, so find
-             what needs to be repaired there *)
-          repair circuit corrections left gate_left
-        else if matches circuit left gate_right then
-          if matches circuit right gate_left then
-            (* The left and right match if you swap the expected
-               so nothing needs to be fixed here *)
-            (circuit, corrections)
-          else
-            (* Otherwise, the expected left matched the right
-               gate, but the expected right didn't match the
-               left gate, so repair the left gate *)
-            repair circuit corrections right gate_left
-        else if matches circuit right gate_left then
-          (* At this point, we know the expected left didn't
-             match but the expected right did, so repair
-             the right gate to match the expected left *)
-            repair circuit corrections left gate_right
-        else
-          (* if we get here, the op code matched, but both the left and
-             right circuits don't match the expected, so this circuit
-             is the problem. Find the circuit that does have the
-             correct opcode, left and right and swap it with this one *)
-          replace_with_match circuit corrections name expected
-      else
-        (* At this point, not even the op code matches, so this circuit
-           needs to be replaced with one with the correct opcode, left
-           and right and swap it with this one *)
-        replace_with_match circuit corrections name expected
-    | _ -> (circuit, corrections)
-          
+  let node = StringMap.find name circuit in
+  match (expected, node) with
+  | (TreeGate (op,left,right), Gate (gate_op, gate_left, gate_right)) ->
+     if op == gate_op then
+       if matches circuit left gate_left then
+         if matches circuit right gate_right then
+           (* If the left and right match, nothing to change *)
+           (circuit, corrections)
+         else
+           (* The left was good, but the right didn't match, find
+              what needs to be repair in the right tree *)
+           repair circuit corrections right gate_right
+       else if matches circuit right gate_right then
+         (* We already know that the left didn't match, so find
+            what needs to be repaired there *)
+         repair circuit corrections left gate_left
+       else if matches circuit left gate_right then
+         if matches circuit right gate_left then
+           (* The left and right match if you swap the expected
+              so nothing needs to be fixed here *)
+           (circuit, corrections)
+         else
+           (* Otherwise, the expected left matched the right
+              gate, but the expected right didn't match the
+              left gate, so repair the left gate *)
+           repair circuit corrections right gate_left
+       else if matches circuit right gate_left then
+         (* At this point, we know the expected left didn't
+            match but the expected right did, so repair
+            the right gate to match the expected left *)
+         repair circuit corrections left gate_right
+       else
+         (* if we get here, the op code matched, but both the left and
+            right circuits don't match the expected, so this circuit
+            is the problem. Find the circuit that does have the
+            correct opcode, left and right and swap it with this one *)
+         replace_with_match circuit corrections name expected
+     else
+       (* At this point, not even the op code matches, so this circuit
+          needs to be replaced with one with the correct opcode, left
+          and right and swap it with this one *)
+       replace_with_match circuit corrections name expected
+  | _ -> (circuit, corrections)
+
 let repair_n max_n (circuit,corrections) n =               
   let expected = expect_output max_n n in
   if matches circuit expected (output_name n) then
