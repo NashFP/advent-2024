@@ -8,17 +8,12 @@
    to the actual sequence and find places that can be swapped.
    *)
 
+open Core
 open Advent_lib
 
 exception Err of string
     
-module StringKey =
-  struct
-    type t = string
-    let compare = String.compare
-  end
-
-module StringMap = Map.Make(StringKey)
+module StringMap = Map.Make(String)
 
 type op_type = AND | OR | XOR
 type input_source = X | Y
@@ -32,13 +27,13 @@ let parse_inputs inputs =
     | _ -> raise (Err "Unexpected input source")
   in
   let split_input s =
-    let parts = Str.split (Str.regexp ": *") s in
-    let input_name = List.hd parts in
+    let parts = Re.Str.split (Re.Str.regexp ": *") s in
+    let input_name = List.hd_exn parts in
     let input_source = parse_input_source input_name.[0] in
-    let input_num = int_of_string (String.sub input_name 1 2) in
-    (input_name, Input (input_source, input_num, int_of_string (List.nth parts 1)))
+    let input_num = Int.of_string (String.sub input_name ~pos:1 ~len:2) in
+    (input_name, Input (input_source, input_num, Int.of_string (List.nth_exn parts 1)))
   in
-  StringMap.of_list (List.map split_input inputs)
+  StringMap.of_alist_exn (List.map ~f:split_input inputs)
 
 let parse_circuit map lines =
   let parse_op = function
@@ -48,14 +43,14 @@ let parse_circuit map lines =
     | _ -> raise (Err "Unexpected operation")
   in
   let parse_line line =
-    let parts = Array.of_list (String.split_on_char ' ' line) in
+    let parts = Array.of_list (String.split ~on:' ' line) in
     (parts.(4),Gate ((parse_op parts.(1)),parts.(0),parts.(2)))
   in
-  let add_to_map map (key,gate) = StringMap.add key gate map in
-  List.fold_left add_to_map map (List.map parse_line lines)
+  let add_to_map map (key,gate) = Map.set ~key:key ~data:gate map in
+  List.fold ~f:add_to_map ~init:map (List.map ~f:parse_line lines)
 
 let rec eval_output circuit out =
-  match StringMap.find out circuit with
+  match Map.find_exn circuit out with
   | Gate (AND,left,right) -> (eval_output circuit left) land
                              (eval_output circuit right)
   | Gate (OR,left,right) -> (eval_output circuit left) lor
@@ -67,15 +62,15 @@ let rec eval_output circuit out =
 let eval_num circuit prefix =
   let eval_next result out =
     (result lsl 1) lor (eval_output circuit out) in
-  List.fold_left eval_next 0
-    (List.rev (List.filter (String.starts_with ~prefix:prefix)
-                 (List.map fst (StringMap.to_list circuit))))
+  List.fold ~f:eval_next ~init:0
+    (List.rev (List.filter ~f:(String.is_prefix ~prefix:prefix)
+                 (List.map ~f:fst (Map.to_alist circuit))))
 
 let output_name n =
-  if n < 10 then "z0" ^ (string_of_int n)
-  else "z" ^ (string_of_int n)
+  if n < 10 then "z0" ^ (Int.to_string n)
+  else "z" ^ (Int.to_string n)
 
-let is_output (name,_) = name.[0] == 'z'
+let is_output (name,_) = Char.(name.[0] = 'z')
 
 (** The expect_ functions generate the expected sequence of
    instructions for a given output. *)
@@ -86,21 +81,21 @@ and
   TreeGate (AND,(TreeInput (X,n)),(TreeInput (Y,n)))
 and
   expect_prev_carry_out n =
-  if n == 2 then
+  if n = 2 then
     TreeGate (AND,expect_addbits (n-1), expect_carry_out (n-2))
   else
     TreeGate (AND,expect_addbits (n-1),expect_carry_in (n-1))
 and
   expect_carry_in n =
-  if n == 1 then
+  if n = 1 then
     TreeGate (OR,(expect_carry_out (n-1)),(expect_addbits (n-1)))
   else
     TreeGate (OR,(expect_carry_out (n-1)),(expect_prev_carry_out n))
 and
   expect_output max_n n =
-  if n == 0 then
+  if n = 0 then
     expect_addbits n
-  else if n == 1 then
+  else if n = 1 then
     TreeGate (XOR,(expect_addbits n),(expect_carry_out (n-1)))
   else if n < max_n then
     TreeGate (XOR,(expect_addbits n),(expect_carry_in n))
@@ -110,10 +105,10 @@ and
 (** The matches function returns true if a named circuit matches
     its expected value *)
 let rec matches circuit expected name  =
-  let node = StringMap.find name circuit in
+  let node = Map.find_exn circuit name in
   match (expected, node) with
   | (TreeGate (op,left,right), Gate (gate_op, gate_left, gate_right)) ->
-    if op == gate_op then
+    if phys_equal op gate_op then
       (* If the op codes match, see if the operands match, either in
          the same order or swapped *)
       (matches circuit left gate_left && matches circuit right gate_right) ||
@@ -121,26 +116,27 @@ let rec matches circuit expected name  =
     else
       false
   | (TreeInput (xy,name), Input (input_xy, input_name, _)) ->
-    xy == input_xy && name == input_name
+    phys_equal xy input_xy && name = input_name
   | _ -> false
 
 (** find_match searches all the circuits looking for one that matches
     the expected value *)
 let find_match circuit expected =
   let is_match (name,_) = matches circuit expected name in
-  let matched = List.filter is_match (StringMap.to_list circuit) in
+  let matched = List.filter ~f:is_match (Map.to_alist circuit) in
   if List.is_empty matched then
     None
   else
-    Some (fst (List.hd matched))
+    Some (fst (List.hd_exn matched))
 
 let replace_with_match circuit corrections name expected =
   match find_match circuit expected with
   | None -> raise (Err ("can't find match for " ^ name))
   | Some matched_name ->
-    let old_top = StringMap.find name circuit in
-    let old_match = StringMap.find matched_name circuit in
-    (StringMap.add name old_match (StringMap.add matched_name old_top circuit),
+    let old_top = Map.find_exn circuit name in
+    let old_match = Map.find_exn circuit matched_name in
+    (Map.set ~key:name ~data:old_match
+       (Map.set ~key:matched_name ~data:old_top circuit),
      (name :: matched_name :: corrections))
 
 (** repair looks for circuits that don't match their expected value,
@@ -148,10 +144,10 @@ let replace_with_match circuit corrections name expected =
     value and then swaps the two values and records the names of the
     two swapped items *)
 let rec repair circuit corrections expected name =
-  let node = StringMap.find name circuit in
+  let node = Map.find_exn circuit name in
   match (expected, node) with
   | (TreeGate (op,left,right), Gate (gate_op, gate_left, gate_right)) ->
-     if op == gate_op then
+     if phys_equal op gate_op then
        if matches circuit left gate_left then
          if matches circuit right gate_right then
            (* If the left and right match, nothing to change *)
@@ -200,18 +196,18 @@ let repair_n max_n (circuit,corrections) n =
     repair circuit corrections expected (output_name n)
 
 let repair max_n circuit =
-  List.fold_left (repair_n max_n) (circuit,[]) (Mwlib.range 0 max_n)
+  List.fold ~f:(repair_n max_n) ~init:(circuit,[]) (List.range 0 max_n)
 
 let day24 () =
   let lines = Mwlib.read_file "data/day24.txt" in
   let groups = Mwlib.split_groups lines in
-  let inputs = parse_inputs (List.hd groups) in
-  let circuit = parse_circuit inputs (List.nth groups 1) in
+  let inputs = parse_inputs (List.hd_exn groups) in
+  let circuit = parse_circuit inputs (List.nth_exn groups 1) in
   let resulta = eval_num circuit "z" in
-  let max_n = (List.length (List.filter is_output (StringMap.to_list circuit))) - 1 in
+  let max_n = (List.length (List.filter ~f:is_output (Map.to_alist circuit))) - 1 in
   let (_, corrections) = repair max_n circuit in
-  let correction_str = String.concat ","
-      (List.sort String.compare corrections) in
+  let correction_str = String.concat ~sep:","
+      (List.sort ~compare:String.compare corrections) in
   Printf.printf "day24a = %d\nday24b = %s\n" resulta correction_str;;
 
 day24 ();;

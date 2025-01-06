@@ -15,15 +15,16 @@
   two points along the path.
  *)
 
+open Core
 open Advent_lib
 
 let find_start lines =
   let width = String.length lines.(0) in
   let height = Array.length lines in
-  let is_start (x,y) = lines.(y).[x] == 'S' in
-  List.hd (List.filter is_start
-             (Mwlib.product (Mwlib.range 0 width)
-                (Mwlib.range 0 height)))
+  let is_start (x,y) = Char.(lines.(y).[x] = 'S') in
+  List.hd_exn (List.filter ~f:is_start
+             (List.cartesian_product (List.range 0 width)
+                (List.range 0 height)))
 
 let make_path lines =
   let (sx,sy) = find_start lines in
@@ -33,7 +34,7 @@ let make_path lines =
        x,y that this one is the next of*)
     let is_next (x,y) =
       let ch = lines.(y).[x] in
-      (ch == '.' || ch == 'E') && (x != prev_x || y != prev_y) in
+      ((Char.(ch = '.') || Char.(ch = 'E'))) && (x <> prev_x || y <> prev_y) in
     
     (* Try each direction, only one should succeed *)
     if is_next (x-1,y) then (x-1,y)
@@ -48,7 +49,7 @@ let make_path lines =
     (* Add it to the path *)
     let next_path = (x,y,len) :: path in
 
-    if lines.(y).[x] == 'E' then
+    if Char.(lines.(y).[x] = 'E') then
     (* If this item is the E, we are done, reverse the path
        since we were building it by adding new items to the front. *)
       List.rev next_path
@@ -83,7 +84,7 @@ let cheat_count max_pico min_cheat path =
        (* To find the cheats, we take the head item from the path
           and compute all the possible cheats from it to the rest
           of the path. *)
-       loop rest (List.fold_left (try_add_cheats from_pos) cheats rest)
+       loop rest (List.fold ~f:(try_add_cheats from_pos) ~init:cheats rest)
   in
   loop path 0
        

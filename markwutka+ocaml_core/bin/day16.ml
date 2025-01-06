@@ -9,9 +9,11 @@
    to 0.04 seconds.
 *)
 
+open Core
 open Advent_lib
 
 type dir_type = North | East | South | West
+                [@@deriving sexp_of, of_sexp]
 
 let compare_dir d0 d1 =
   match (d0,d1) with
@@ -32,9 +34,10 @@ let compare_dir d0 d1 =
   | (West,East) -> 1
   | (West,South) -> 1
 
-module IntDirTriple =
-  struct
+module IntDirTriple = struct
+  module T = struct
     type t = int * int * dir_type
+    [@@deriving sexp_of, of_sexp]
     let compare (x0,y0,d0) (x1,y1,d1) =
       match Stdlib.compare x0 x1 with
       | 0 -> (match Stdlib.compare y0 y1 with
@@ -42,25 +45,21 @@ module IntDirTriple =
               | c -> c)
       | c -> c
   end
+  include T
+  include Comparator.Make(T)
+end
       
 module IntDirSet = Set.Make(IntDirTriple)
 module IntDirMap = Map.Make(IntDirTriple)
     
-module IntPairs =
-  struct
-    type t = int * int
-    let compare (x0,y0) (x1,y1) =
-      match Stdlib.compare x0 x1 with
-        0 -> Stdlib.compare y0 y1
-      | c -> c
-  end
+module PairsSet = Set.Make(Mwlib.IntPairs)
+module PairsMap = Map.Make(Mwlib.IntPairs)
 
-module PairsSet = Set.Make(IntPairs)
-module PairsMap = Map.Make(IntPairs)
-
-module WeightedIntPairs =
-  struct
+module WeightedIntPairs = struct
+  module T = struct
     type t = int * int * int * dir_type
+    [@@deriving sexp_of, of_sexp]
+             
     let compare (x0,y0,w0,d0) (x1,y1,w1,d1) =
       match Stdlib.compare w0 w1 with
       | 0 -> (match Stdlib.compare x0 x1 with
@@ -70,6 +69,9 @@ module WeightedIntPairs =
           | c -> c)
       | c -> c
   end
+  include T
+  include Comparator.Make(T)
+end
 
 module PriorityMap = Map.Make(WeightedIntPairs)
 
@@ -95,34 +97,35 @@ let turn_right = function
 let find_start grid =
   let width = String.length grid.(0) in
   let height = Array.length grid in
-  List.hd (List.filter (fun (x,y) -> grid.(y).[x] == 'S')
-             (Mwlib.product (Mwlib.range 0 width) (Mwlib.range 0 height)))
+  List.find_exn ~f:(fun (x,y) -> Char.(grid.(y).[x] = 'S'))
+             (List.cartesian_product (List.range 0 width) (List.range 0 height))
 
 let rec find_path width height grid prio visited =
-  let ((x,y,path_cost,dir),path) = PriorityMap.min_binding prio in
-  let new_prio = PriorityMap.remove (x,y,path_cost,dir) prio in
-  let new_visited = IntDirSet.add (x,y,dir) visited in
+  let ((x,y,path_cost,dir),path) = Map.min_elt_exn prio in
+  let new_prio = Map.remove prio (x,y,path_cost,dir) in
+  let new_visited = Set.add visited (x,y,dir) in
   let is_valid (x,y) = x >= 0 && x < width && y >= 0 && y < height &&
-                         grid.(y).[x] != '#' in
+                         Char.(grid.(y).[x] <> '#') in
   let try_dir prio (next_dir,next_cost) =
     let (new_x,new_y) = in_dir (x,y) next_dir in    
-    if is_valid (new_x,new_y) && not (IntDirSet.mem (new_x,new_y,next_dir) new_visited) then
-      match PriorityMap.find_opt (new_x,new_y,next_cost,next_dir) prio with
-      | None -> PriorityMap.add (new_x,new_y,next_cost,next_dir)
-                                 (PairsSet.add (new_x,new_y) path) prio
+    if is_valid (new_x,new_y) && not (Set.mem new_visited (new_x,new_y,next_dir)) then
+      match Map.find prio (new_x,new_y,next_cost,next_dir) with
+      | None -> Map.set prio ~key:(new_x,new_y,next_cost,next_dir)
+                                 ~data:(Set.add path (new_x,new_y))
       | Some old_path ->
-        PriorityMap.add (new_x,new_y,next_cost,next_dir)
-          (PairsSet.add (new_x,new_y)
-             (PairsSet.add_seq (PairsSet.to_seq path) old_path)) prio
+        Map.set prio ~key:(new_x,new_y,next_cost,next_dir)
+          ~data:(Set.add (Set.union path old_path) (new_x,new_y))
+
     else
       prio
   in
-  if grid.(y).[x] == 'E' then
-    (path_cost, 1 + List.length (PairsSet.to_list path))
+  if Char.(grid.(y).[x] = 'E') then
+    (path_cost, 1 + Set.length path)
   else
     find_path width height grid
-      (List.fold_left try_dir new_prio [(dir,path_cost+1);(turn_left dir, path_cost+1001);
-                                        (turn_right dir, path_cost+1001)]) new_visited
+      (List.fold ~f:try_dir ~init:new_prio [(dir,path_cost+1);(turn_left dir, path_cost+1001);
+                                            (turn_right dir, path_cost+1001)])
+      new_visited
 
 let day16 () =
   let grid = Array.of_list (Mwlib.read_file "data/day16.txt") in
@@ -130,8 +133,8 @@ let day16 () =
   let width = String.length grid.(0) in
   let height = Array.length grid in
   let (resulta,resultb) = find_path width height grid
-      (PriorityMap.add (start_x,start_y,0,East)
-         PairsSet.empty PriorityMap.empty) IntDirSet.empty in
+      (Map.set ~key:(start_x,start_y,0,East)
+         ~data:PairsSet.empty PriorityMap.empty) IntDirSet.empty in
   Printf.printf "day16a = %d\nday16b = %d\n" resulta resultb;;
 
 day16 ();;

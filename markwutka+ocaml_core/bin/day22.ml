@@ -18,6 +18,7 @@
    wasn't already there.
  *)
 
+open Core
 open Advent_lib
 open Option
 
@@ -27,12 +28,12 @@ let do_round n =
   (n32 lxor (n32 lsl 11)) land 16777215
 
 let rec do_n_rounds n x =
-  if n == 0 then x else
+  if n = 0 then x else
     do_n_rounds (n-1) (do_round x)
 
 let rounds_digits n x =
   let rec loop n x prev_digit digits =
-    if n == 0 then
+    if n = 0 then
       List.rev digits
     else
       let next_x = do_round x in
@@ -58,15 +59,15 @@ let make_map l =
     else
       map
   in
-  List.fold_left add (Array.make 160000 None) (make_map_keys l)
+  List.fold ~f:add ~init:(Array.create ~len:160000 None) (make_map_keys l)
 
 let merge_maps m1 m2 =
   let rec merge_at n =
     if is_none m1.(n) then
       m1.(n) <- m2.(n)
     else if is_some m2.(n) then
-      m1.(n) <- Some ((get m1.(n)) + (get m2.(n)));
-    if n == 0 then m1
+      m1.(n) <- Some ((value_exn m1.(n)) + (value_exn m2.(n)));
+    if n = 0 then m1
     else merge_at (n-1)
   in
   merge_at 159999
@@ -85,12 +86,13 @@ let max_val map =
 
 let day22 () =
   let lines = Mwlib.read_file "data/day22.txt" in
-  let nums = List.map int_of_string lines in  
-  let resulta = List.fold_left (+) 0
-                  (List.map (do_n_rounds 2000) nums) in
-  let digits = List.map (rounds_digits 2000) nums in
-  let maps = List.map make_map digits in
-  let map_b = List.fold_left merge_maps (List.hd maps) (List.tl maps) in
+  let nums = List.map ~f:int_of_string lines in  
+  let resulta = List.reduce_exn ~f:(+)
+                  (List.map ~f:(do_n_rounds 2000) nums) in
+  let digits = List.map ~f:(rounds_digits 2000) nums in
+  let maps = List.map ~f:make_map digits in
+  let map_b = List.fold ~f:merge_maps ~init:(List.hd_exn maps)
+      (List.tl_exn maps) in
   let resultb = max_val map_b in
   Printf.printf "day22a = %d\nday22b = %d\n" resulta resultb;;
 

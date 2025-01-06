@@ -1,16 +1,17 @@
 (* There was no part B for day 25 *)
+open Core
 open Advent_lib
 
 let parse_group (keys, locks) group =
   let arr = Array.of_list group in
   let rec depth row curr_depth =
-    if arr.(curr_depth).[row] == '.' then
+    if Char.(arr.(curr_depth).[row] = '.') then
       curr_depth-1
     else
       depth row (curr_depth+1)
   in
   let rec height row curr_height =
-    if arr.(6-curr_height).[row] == '.' then
+    if Char.(arr.(6-curr_height).[row] = '.') then
       curr_height-1
     else
       height row (curr_height+1)
@@ -26,8 +27,9 @@ let fit ((l0,l1,l2,l3,l4),(k0,k1,k2,k3,k4)) =
 let day25 () =
   let lines = Mwlib.read_file "data/day25.txt" in
   let groups = Mwlib.split_groups lines in
-  let (keys, locks) = List.fold_left parse_group ([],[]) groups in
-  let resulta = List.length (List.filter fit (Mwlib.product keys locks)) in
+  let (keys, locks) = List.fold ~f:parse_group ~init:([],[]) groups in
+  let resulta = List.length (List.filter ~f:fit
+                               (List.cartesian_product keys locks)) in
   Printf.printf "day25a = %d\n" resulta;;
 
 day25 ();;

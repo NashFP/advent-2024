@@ -11,6 +11,8 @@
   a list of the correct length, and then I return all the starting A
   values that generated that one, and I just check the first one.
  *)
+
+open Core
 open Advent_lib
 
 exception Err of string
@@ -49,7 +51,7 @@ let make_inst op arg =
   | _ -> raise (Err "Invalid instruction")
 
 let parse_instrs instr_str =
-  let instr_ints = List.map int_of_string (String.split_on_char ',' instr_str) in
+  let instr_ints = List.map ~f:Int.of_string (String.split ~on:',' instr_str) in
   let rec loop instr_ints instrs =
     match instr_ints with
     | [] -> Array.of_list (List.rev instrs)
@@ -60,28 +62,28 @@ let parse_instrs instr_str =
 
 let parse_program_target groups =
   let parse_program line =
-    let parsed = List.nth (Str.split split_regex line) 1 in
-    List.map int_of_string (String.split_on_char ',' parsed)
+    let parsed = List.nth_exn (Str.split split_regex line) 1 in
+    List.map ~f:Int.of_string (String.split ~on:',' parsed)
   in
-  parse_program (List.hd (List.nth groups 1))
+  parse_program (List.hd_exn (List.nth_exn groups 1))
     
 let parse_machine groups =
   let parse_num line =
     let parsed = Str.split split_regex line in
-    int_of_string (List.nth parsed 1)
+    int_of_string (List.nth_exn parsed 1)
   in
   let parse_program line =
     let parsed = Str.split split_regex line in
-    parse_instrs (List.nth parsed 1)
+    parse_instrs (List.nth_exn parsed 1)
   in
-  let reg_group = List.hd groups in
-  let prog_group = List.nth groups 1 in
+  let reg_group = List.hd_exn groups in
+  let prog_group = List.nth_exn groups 1 in
   Machine (
-    (parse_num (List.hd reg_group)),
-    (parse_num (List.nth reg_group 1)),
-    (parse_num (List.nth reg_group 2)),
+    (parse_num (List.hd_exn reg_group)),
+    (parse_num (List.nth_exn reg_group 1)),
+    (parse_num (List.nth_exn reg_group 2)),
     0,
-    (parse_program (List.hd prog_group)),
+    (parse_program (List.hd_exn prog_group)),
     [])
 
 let rec execute (Machine (rega,regb,regc,pc,instrs,output)) =
@@ -103,7 +105,7 @@ let rec execute (Machine (rega,regb,regc,pc,instrs,output)) =
     | BST combo -> execute (
                        Machine (rega, (evaluate_combo combo) land 7, regc,
                                 pc+2, instrs, output))
-    | JNZ lit -> if rega == 0 then
+    | JNZ lit -> if rega = 0 then
                    execute (Machine (rega, regb, regc, pc+2, instrs, output))
                  else
                    execute (Machine (rega, regb, regc, lit, instrs, output))
@@ -121,14 +123,14 @@ let set_rega (Machine (_,regb,regc,pc,instrs,output)) rega =
 let rega_add = Mwlib.range 0 8
 
 let rec rev_eng_rega (Machine (_,_,_,_,instrs,_)) a_values target round num_rounds =
-  let target_values = List.rev (Mwlib.take round (List.rev target)) in
+  let target_values = List.rev (List.take (List.rev target) round) in
   let is_possible a_add =
     let exec_output = execute (Machine (a_add, 0, 0, 0, instrs, [])) in
-    List.equal (fun a b -> a == b) target_values exec_output
+    List.equal (fun a b -> a = b) target_values exec_output
   in
-  let possible_a rega = List.map (fun x -> (rega lsl 3) + x) rega_add in
-  let all_a = List.filter is_possible (List.concat_map possible_a a_values) in
-  if round == num_rounds then
+  let possible_a rega = List.map ~f:(fun x -> (rega lsl 3) + x) rega_add in
+  let all_a = List.filter ~f:is_possible (List.concat_map ~f:possible_a a_values) in
+  if round = num_rounds then
     all_a
   else
     rev_eng_rega (Machine (0,0,0,0,instrs,[])) all_a target (round+1) num_rounds
@@ -140,17 +142,17 @@ let day17 () =
   let groups = Mwlib.split_groups lines in
   let machine = parse_machine groups in
   let outputa = execute machine in
-  let resulta = String.concat "," (List.map string_of_int outputa) in
+  let resulta = String.concat ~sep:"," (List.map ~f:Int.to_string outputa) in
   let targetb = parse_program_target groups in
-  let targetb_str = String.concat "," (List.map string_of_int targetb) in
+  let targetb_str = String.concat ~sep:"," (List.map ~f:Int.to_string targetb) in
   let resultb = (rev_eng_rega machine [0] targetb 1 (List.length targetb)) in
-  let check_machineb = set_rega machine (List.hd resultb) in
+  let check_machineb = set_rega machine (List.hd_exn resultb) in
   let check_outputb = execute check_machineb in
-  let check_resultb = String.concat "," (List.map string_of_int check_outputb) in
+  let check_resultb = String.concat ~sep:"," (List.map ~f:Int.to_string check_outputb) in
   (if String.equal check_resultb targetb_str then
     Printf.printf "Resultb check succeeded\n"
   else
-    Printf.printf "Resultb value %d failed check (%s)\n" (List.hd resultb) check_resultb);
-  Printf.printf "day17a = %s\nday17b = %d\n" resulta (List.hd resultb);;
+    Printf.printf "Resultb value %d failed check (%s)\n" (List.hd_exn resultb) check_resultb);
+  Printf.printf "day17a = %s\nday17b = %d\n" resulta (List.hd_exn resultb);;
 
 day17 ();;

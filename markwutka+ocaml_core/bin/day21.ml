@@ -14,7 +14,7 @@
   I just create a cost table with a depth of 2, and for
   part B I create it for 25.
  *)
-
+open Core
 open Advent_lib
 
 let keypad = Array.of_list [(1,3);(0,2);(1,2);(2,2);(0,1);
@@ -49,15 +49,15 @@ let alt_paths = [(0,0,[press]);(0,1,[right;press]);(0,2,[down;left;press]);
 
 
 let path_table =
-  let table = Array.make_matrix 5 5 [] in
+  let table = Array.make_matrix ~dimx:5 ~dimy:5 [] in
   let set_path (x,y,path) = table.(x).(y) <- path in
-  List.iter set_path paths;
+  List.iter ~f:set_path paths;
   table;;
 
 let alt_path_table =
-  let table = Array.make_matrix 5 5 [] in
+  let table = Array.make_matrix ~dimx:5 ~dimy:5 [] in
   let set_path (x,y,path) = table.(x).(y) <- path in
-  List.iter set_path alt_paths;
+  List.iter ~f:set_path alt_paths;
   table;;
 
 
@@ -78,57 +78,57 @@ let make_cost_table n =
     min (path_cost table path_table.(from_pos).(to_pos))
       (path_cost table alt_path_table.(from_pos).(to_pos)) in
   let rec loop n prev_table =
-    if n == 0 then prev_table
+    if n = 0 then prev_table
     else
       loop (n-1)
-        (Array.init_matrix 5 5 (get_cost prev_table))
+        (Mwlib.init_matrix 5 5 ~f:(get_cost prev_table))
   in
-  loop n (Array.make_matrix 5 5 1)
+  loop n (Array.make_matrix ~dimx:5 ~dimy:5 1)
 
 let key_of_ch ch =
-  if ch >= '0' && ch <= '9' then
-    Char.code ch - Char.code '0'
+  if Char.is_digit ch then
+    Char.to_int ch - Char.to_int '0'
   else
     10
 
-let parse_code code = List.map key_of_ch (Mwlib.string_to_list code)
+let parse_code code = List.map ~f:key_of_ch (String.to_list code)
 
 let shortest_key_cost table (from_x,from_y) (to_x,to_y) =
-  if from_x == to_x && from_y == to_y then
+  if from_x = to_x && from_y = to_y then
     0
   else
     let xpath =
-      if from_x == to_x then
+      if from_x = to_x then
         []
-      else if from_x == to_x - 1 then
+      else if from_x = to_x - 1 then
         [right]
-      else if from_x == to_x - 2 then
+      else if from_x = to_x - 2 then
         [right;right]
-      else if from_x == to_x + 1 then
+      else if from_x = to_x + 1 then
         [left]
       else
         [left;left]
     in
     let ypath =
-      if from_y == to_y then
+      if from_y = to_y then
         []
-      else if from_y == to_y - 1 then
+      else if from_y = to_y - 1 then
         [down]
-      else if from_y == to_y - 2 then
+      else if from_y = to_y - 2 then
         [down;down]
-      else if from_y == to_y - 3 then
+      else if from_y = to_y - 3 then
         [down;down;down]
-      else if from_y == to_y + 1 then
+      else if from_y = to_y + 1 then
         [up]
-      else if from_y == to_y + 2 then
+      else if from_y = to_y + 2 then
         [up;up]
       else
         [up;up;up] in    
-    if from_y == 3 && to_x == 0 then
+    if from_y = 3 && to_x = 0 then
       (* If we are on the bottom of the keypad and need to
          go to the far left column, we have to go up first *)
       path_cost table (ypath @ xpath @ [press])
-    else if from_x == 0 &&  to_y == 3 then
+    else if from_x = 0 &&  to_y = 3 then
       (* If we are in the far left column and have to go to
          the bottom, we have to go right first *)
       path_cost table (xpath @ ypath @ [press])
@@ -150,9 +150,9 @@ let keyboard_path_cost table code =
   
 let int_of_code code =
   let code_num num digit =
-    if digit == 10 then num
+    if digit = 10 then num
     else num * 10 + digit in
-  List.fold_left code_num 0 code
+  List.fold_left ~f:code_num ~init:0 code
 
 let code_val table code =
   let code_int = int_of_code code in
@@ -161,11 +161,11 @@ let code_val table code =
 
 let day21 () =
   let lines = Mwlib.read_file "data/day21.txt" in
-  let codes = List.map parse_code lines in
+  let codes = List.map ~f:parse_code lines in
   let table2 = make_cost_table 2 in
-  let resulta = List.fold_left (+) 0 (List.map (code_val table2) codes) in
+  let resulta = List.reduce_exn ~f:(+) (List.map ~f:(code_val table2) codes) in
   let table25 = make_cost_table 25 in
-  let resultb = List.fold_left (+) 0 (List.map (code_val table25) codes) in
+  let resultb = List.reduce_exn ~f:(+) (List.map ~f:(code_val table25) codes) in
   Printf.printf "day21a = %d\nday21b = %d\n" resulta resultb;;
 
 day21 ();;

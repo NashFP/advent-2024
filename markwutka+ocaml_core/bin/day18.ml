@@ -13,58 +13,49 @@
    search. It looks like the speedup is at least 5x.
  *)
 
+open Core
 open Advent_lib
 
-module IntPairs =
-  struct
-    type t = int * int
-    let compare (x0,y0) (x1,y1) =
-      match Stdlib.compare x0 x1 with
-        0 -> Stdlib.compare y0 y1
-      | c -> c
-  end
-
-module PairsSet = Set.Make(IntPairs)
+module PairsSet = Set.Make(Mwlib.IntPairs)
 
 let parse_pair line =
-  let parts =String.split_on_char ',' line |> List.map int_of_string in
-  (List.hd parts, List.nth parts 1)
+  let parts =String.split ~on:',' line |> List.map ~f:Int.of_string in
+  (List.hd_exn parts, List.nth_exn parts 1)
 
 let traverse (x,y) (max_x,max_y) blocked =
   let is_valid (x,y) = x >= 0 && x <= max_x &&
                          y >= 0 && y <= max_y &&
-                           not (PairsSet.mem (x,y) blocked) in
+                           not (Set.mem blocked (x,y)) in
   let try_move visited next_dirs (x,y) =
     let add_move (x,y) dirs (dx,dy) =
       let new_move = (x+dx,y+dy) in
-      if is_valid new_move && not (PairsSet.mem new_move visited) then
-        PairsSet.add new_move dirs
+      if is_valid new_move && not (Set.mem visited new_move) then
+        Set.add dirs new_move
       else
         dirs in
-    List.fold_left (add_move (x,y)) next_dirs [(-1,0);(0,-1);(1,0);(0,1)] in
+    List.fold ~f:(add_move (x,y)) ~init:next_dirs [(-1,0);(0,-1);(1,0);(0,1)] in
   let rec loop visited path_len last_visited =
-    if PairsSet.mem (max_x,max_y) visited then
+    if Set.mem visited (max_x,max_y) then
       path_len
-    else if List.is_empty (PairsSet.to_list last_visited) then
+    else if Set.is_empty last_visited then
       -1
     else
-      let next_dirs = List.fold_left (try_move visited) PairsSet.empty
-                        (PairsSet.to_list last_visited) in
-      let next_visited = PairsSet.add_seq (PairsSet.to_seq next_dirs)
-                           visited in
+      let next_dirs = List.fold ~f:(try_move visited) ~init:PairsSet.empty
+                        (Set.to_list last_visited) in
+      let next_visited = Set.union next_dirs visited in
       loop next_visited (path_len+1) next_dirs
   in
-  loop (PairsSet.add (x,y) PairsSet.empty) 0 (PairsSet.add (x,y) PairsSet.empty)
+  loop (Set.add PairsSet.empty (x,y)) 0 (Set.add PairsSet.empty (x,y))
 
 let rec find_first_blocker (max_x, max_y) blocked min_blocks max_blocks =
   let mid = (min_blocks + max_blocks) / 2 in
   let result_mid = traverse (0,0) (max_x,max_y)
-                     (PairsSet.of_list (Mwlib.take mid blocked)) in
+                     (PairsSet.of_list (List.take blocked mid)) in
   if result_mid >= 0 then
     let result_mid1 = traverse (0,0) (max_x,max_y)
-                        (PairsSet.of_list (Mwlib.take (mid+1) blocked)) in
+                        (PairsSet.of_list (List.take blocked (mid+1))) in
     if result_mid1 < 0 then
-      List.hd (Mwlib.drop mid blocked)
+      List.hd_exn (List.drop blocked mid)
     else
       find_first_blocker (max_x, max_y) blocked mid max_blocks
   else
@@ -72,8 +63,8 @@ let rec find_first_blocker (max_x, max_y) blocked min_blocks max_blocks =
   
 let day18 () =
   let lines = Mwlib.read_file "data/day18.txt" in
-  let bytes = List.map parse_pair lines in
-  let blocked = PairsSet.of_list (Mwlib.take 1024 bytes) in
+  let bytes = List.map ~f:parse_pair lines in
+  let blocked = PairsSet.of_list (List.take bytes 1024) in
   let resulta = traverse (0,0) (70,70) blocked in
   let (xb,yb) = find_first_blocker (70,70) bytes 0 (List.length bytes) in
   Printf.printf "day18a = %d\nday18b = %d,%d\n" resulta xb yb;;

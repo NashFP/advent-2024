@@ -19,7 +19,7 @@
  (name markwutka_ocaml)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune base core core_unix re ppx_jane ppx_jane)
+ (depends ocaml dune base core core_unix re ppx_jane)
  (tags
   (topics "to describe" your project)))
 
