@@ -19,10 +19,10 @@ open Advent_lib
 
 type equation_type = Eqn of int * int list
 
-let eqn_regex = Str.regexp ": *"
+let eqn_regex = Re.Str.regexp ": *"
 
 let parse_eqn l =
-  let parts = Str.split eqn_regex l in
+  let parts = Re.Str.split eqn_regex l in
   let nums = List.map ~f:Int.of_string
                (String.split ~on:' ' (List.nth_exn parts 1)) in
   Eqn (int_of_string (List.hd_exn parts), nums)

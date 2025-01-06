@@ -24,7 +24,7 @@ type instr_type = ADV of combo_type | BXL of int | BST of combo_type | JNZ of in
 
 type machine_type = Machine of int * int * int * int * instr_type array * int list
 
-let split_regex = Str.regexp ": *"
+let split_regex = Re.Str.regexp ": *"
 
 let combo_of_int i =
   match (i land 7) with
@@ -62,18 +62,18 @@ let parse_instrs instr_str =
 
 let parse_program_target groups =
   let parse_program line =
-    let parsed = List.nth_exn (Str.split split_regex line) 1 in
+    let parsed = List.nth_exn (Re.Str.split split_regex line) 1 in
     List.map ~f:Int.of_string (String.split ~on:',' parsed)
   in
   parse_program (List.hd_exn (List.nth_exn groups 1))
     
 let parse_machine groups =
   let parse_num line =
-    let parsed = Str.split split_regex line in
+    let parsed = Re.Str.split split_regex line in
     int_of_string (List.nth_exn parsed 1)
   in
   let parse_program line =
-    let parsed = Str.split split_regex line in
+    let parsed = Re.Str.split split_regex line in
     parse_instrs (List.nth_exn parsed 1)
   in
   let reg_group = List.hd_exn groups in
