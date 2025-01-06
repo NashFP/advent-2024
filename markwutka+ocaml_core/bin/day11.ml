@@ -41,7 +41,7 @@ let blink num_map = List.fold ~f:blink_step ~init:IntMap.empty
     (Map.to_alist num_map)
 
 let blink_n num_map n =
-  List.fold ~f:(fun acc _ -> blink acc) ~init:num_map (Mwlib.range 0 n)
+  List.fold ~f:(fun acc _ -> blink acc) ~init:num_map (List.range 0 n)
   
 let make_map nums =
   IntMap.of_alist_exn (List.map ~f:(fun x -> (x,1)) nums)

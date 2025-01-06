@@ -120,7 +120,7 @@ let rec execute (Machine (rega,regb,regc,pc,instrs,output)) =
 let set_rega (Machine (_,regb,regc,pc,instrs,output)) rega =
   Machine (rega,regb,regc,pc,instrs,output)
 
-let rega_add = Mwlib.range 0 8
+let rega_add = List.range 0 8
 
 let rec rev_eng_rega (Machine (_,_,_,_,instrs,_)) a_values target round num_rounds =
   let target_values = List.rev (List.take (List.rev target) round) in

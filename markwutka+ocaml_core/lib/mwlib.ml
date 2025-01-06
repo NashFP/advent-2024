@@ -28,15 +28,6 @@ let split_groups l =
 
 let pair x y = (x, y)
 
-let range f t =
-  let rec range1 f t acc =
-    if f >= t then
-      List.rev acc
-    else
-      range1 (f+1) t (f::acc)
-  in
-  range1 f t [];;
-
 let rec gcd a b =
   let m = a % b in
   if m = 0 then b else gcd b m
@@ -78,7 +69,6 @@ let rec permute l =
   | _ -> loop l [] []
      
 let digit_to_int ch = Char.to_int ch - Char.to_int '0'
-
 
 let matrix_dim m = (Array.length m, Array.length m.(0))
 let matrix_to_list m =
