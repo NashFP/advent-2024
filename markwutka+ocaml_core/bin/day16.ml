@@ -39,8 +39,8 @@ module IntDirTriple = struct
     type t = int * int * dir_type
     [@@deriving sexp_of, of_sexp]
     let compare (x0,y0,d0) (x1,y1,d1) =
-      match Stdlib.compare x0 x1 with
-      | 0 -> (match Stdlib.compare y0 y1 with
+      match Int.compare x0 x1 with
+      | 0 -> (match Int.compare y0 y1 with
               | 0 -> compare_dir d0 d1
               | c -> c)
       | c -> c
@@ -61,9 +61,9 @@ module WeightedIntPairs = struct
     [@@deriving sexp_of, of_sexp]
              
     let compare (x0,y0,w0,d0) (x1,y1,w1,d1) =
-      match Stdlib.compare w0 w1 with
-      | 0 -> (match Stdlib.compare x0 x1 with
-          | 0 -> (match Stdlib.compare y0 y1 with
+      match Int.compare w0 w1 with
+      | 0 -> (match Int.compare x0 x1 with
+          | 0 -> (match Int.compare y0 y1 with
               | 0 -> compare_dir d0 d1
               | c -> c)
           | c -> c)
