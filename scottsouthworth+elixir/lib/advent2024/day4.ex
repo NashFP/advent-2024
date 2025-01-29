@@ -2,6 +2,9 @@ defmodule Day4 do
   @xmas %{0 => 88, 1 => 77, 2 => 65, 3 => 83}
   @input File.read!("../data/day4a.txt")
 
+  # searches for X positions in the data
+  # from each X, loops through all possible directions to recursively match XMAS
+
   def part1 do
     grid = get_grid()
 
@@ -22,6 +25,9 @@ defmodule Day4 do
       end
     end)
   end
+
+  # searches for A positions in the data
+  # from each A, checks for M and S on both diagonals
 
   def part2 do
     grid = get_grid()
