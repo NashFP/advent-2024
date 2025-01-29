@@ -1,5 +1,4 @@
 defmodule Day4 do
-
   @xmas %{0 => 88, 1 => 77, 2 => 65, 3 => 83}
   @input File.read!("../data/day4a.txt")
 
@@ -59,5 +58,4 @@ defmodule Day4 do
   defp match(grid, x, y, xd, yd, depth) do
     @xmas[depth] == grid[{x, y}] && match(grid, x + xd, y + yd, xd, yd, depth + 1)
   end
-
 end
