@@ -12,13 +12,7 @@ open Advent_lib
 
 exception Err of string
     
-module StringKey =
-  struct
-    type t = string
-    let compare = String.compare
-  end
-
-module StringMap = Map.Make(StringKey)
+module StringMap = Map.Make(String)
 
 type op_type = AND | OR | XOR
 type input_source = X | Y

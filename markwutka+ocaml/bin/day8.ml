@@ -11,13 +11,7 @@ module IntPairs =
 
 module PairsSet = Set.Make(IntPairs)
 
-module CharKey =
-  struct
-    type t = char
-    let compare = Stdlib.compare
-  end
-
-module CharMap = Map.Make(CharKey)
+module CharMap = Map.Make(Char)
 
 let add_pair (x1,y1) (x2,y2) = (x1+x2,y1+y2)
 let sub_pair (x1,y1) (x2,y2) = (x1-x2,y1-y2)
