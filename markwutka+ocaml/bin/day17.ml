@@ -13,8 +13,6 @@
  *)
 open Advent_lib
 
-exception Err of string
-
 type combo_type = Literal of int | RegA | RegB | RegC | Reserved
 type instr_type = ADV of combo_type | BXL of int | BST of combo_type | JNZ of int |
                   BXC of combo_type | OUT of combo_type | BDV of combo_type |
@@ -34,7 +32,7 @@ let combo_of_int i =
   | 5 -> RegB
   | 6 -> RegC
   | 7 -> Reserved
-  | _ -> raise (Err "Invalid combo value")
+  | _ -> failwith "Invalid combo value"
 
 let make_inst op arg =
   match (op land 7) with
@@ -46,14 +44,14 @@ let make_inst op arg =
   | 5 -> OUT (combo_of_int arg)
   | 6 -> BDV (combo_of_int arg)
   | 7 -> CDV (combo_of_int arg)
-  | _ -> raise (Err "Invalid instruction")
+  | _ -> failwith "Invalid instruction"
 
 let parse_instrs instr_str =
   let instr_ints = List.map int_of_string (String.split_on_char ',' instr_str) in
   let rec loop instr_ints instrs =
     match instr_ints with
     | [] -> Array.of_list (List.rev instrs)
-    | [_] -> raise (Err "Dangling instruction")
+    | [_] -> failwith "Dangling instruction"
     | inst :: opcode :: rest -> loop rest (make_inst inst opcode :: instrs)
   in
   loop instr_ints []
@@ -90,7 +88,7 @@ let rec execute (Machine (rega,regb,regc,pc,instrs,output)) =
     | RegA -> rega
     | RegB -> regb
     | RegC -> regc
-    | Reserved -> raise (Err "Tried to use reserved value") in
+    | Reserved -> failwith "Tried to use reserved value" in
   if pc / 2 >= Array.length instrs then
     List.rev output
   else

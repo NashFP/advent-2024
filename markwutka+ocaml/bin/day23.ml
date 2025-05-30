@@ -9,14 +9,8 @@
 
 open Advent_lib
 
-module StringKey =
-  struct
-    type t = string
-    let compare = String.compare
-  end
-
-module StringSet = Set.Make(StringKey)
-module StringMap = Map.Make(StringKey)
+module StringSet = Set.Make(String)
+module StringMap = Map.Make(String)
     
 let add_to_adj map pair =
   let update v adj_opt =

@@ -12,13 +12,7 @@
  *)
 open Advent_lib
 
-module StringKey =
-  struct
-    type t = string
-    let compare = String.compare
-  end
-
-module StringMap = Map.Make(StringKey)
+module StringMap = Map.Make(String)
 
 let can_form towels orig_pattern =
   let update_count num_combos opt =

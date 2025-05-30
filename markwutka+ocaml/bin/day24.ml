@@ -10,15 +10,7 @@
 
 open Advent_lib
 
-exception Err of string
-    
-module StringKey =
-  struct
-    type t = string
-    let compare = String.compare
-  end
-
-module StringMap = Map.Make(StringKey)
+module StringMap = Map.Make(String)
 
 type op_type = AND | OR | XOR
 type input_source = X | Y
@@ -29,7 +21,7 @@ let parse_inputs inputs =
   let parse_input_source = function
     | 'x' -> X
     | 'y' -> Y
-    | _ -> raise (Err "Unexpected input source")
+    | _ -> failwith "Unexpected input source"
   in
   let split_input s =
     let parts = Str.split (Str.regexp ": *") s in
@@ -45,7 +37,7 @@ let parse_circuit map lines =
     | "XOR" -> XOR
     | "OR" -> OR
     | "AND" -> AND
-    | _ -> raise (Err "Unexpected operation")
+    | _ -> failwith "Unexpected operation"
   in
   let parse_line line =
     let parts = Array.of_list (String.split_on_char ' ' line) in
@@ -136,7 +128,7 @@ let find_match circuit expected =
 
 let replace_with_match circuit corrections name expected =
   match find_match circuit expected with
-  | None -> raise (Err ("can't find match for " ^ name))
+  | None -> failwith ("can't find match for " ^ name)
   | Some matched_name ->
     let old_top = StringMap.find name circuit in
     let old_match = StringMap.find matched_name circuit in

@@ -1,7 +1,5 @@
 open Advent_lib
 
-exception Err of string
-
 type pos_map = PosMap of (int array array) * (int * int) list * int
 
 type dir_type = Up | Right | Down | Left
@@ -60,7 +58,7 @@ let get_unique (PosMap (_, _, unique)) = unique
 let find_guard grid =
   let rec loop y =
     if y >= Array.length grid then
-      raise (Err "Can't find guard")
+      failwith "Can't find guard"
     else
       let row = Array.get grid y in
       if String.contains row '^' then
