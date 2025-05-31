@@ -54,8 +54,7 @@
 (defun cartesian-product (&rest lists)
   (labels ((prod (a b)
 	     (mapcan (lambda (bx) (mapcar (lambda (ax)
-					    (if (listp bx) (cons ax bx)
-						(list ax bx)))
+					    (list ax bx))
 					  a))
 		     b)))
     (reduce #'prod lists :from-end t)))
@@ -63,8 +62,7 @@
 (defun cartesian-product-rev (&rest lists)
   (labels ((prod (a b)
 	     (mapcan (lambda (ax) (mapcar (lambda (bx)
-					    (if (listp bx) (cons ax bx)
-						(list ax bx)))
+					    (list ax bx))
 					  b))
 		     a)))
     (reduce #'prod lists :from-end t)))
@@ -88,6 +86,15 @@
 	    (>= x (second dims))) default
 	    (aref arr y x))))
 
+(defun set-at (arr coord value)
+  (let ((dims (array-dimensions arr))
+	(x (second coord))
+	(y (first coord)))
+    (when (and (>= x 0) (>= y 0)
+	    (< y (first dims))
+	    (< x (second dims)))
+      (setf (aref arr y x) value))))
+
 (defun get-at-dir (arr coord dir &key default)
   (get-at arr (list (+ (car coord) (car dir)) (+ (cadr coord) (cadr dir)))
 	  :default default))
@@ -99,3 +106,9 @@
   (let ((coords (mapcar (lambda (n) (coord-from start-coord dir n))
 			(iota len))))
     (mapcar (lambda (coord) (get-at arr coord)) coords)))
+
+(defun add-pair (p1 p2)
+  (list (+ (car p1) (car p2)) (+ (cadr p1) (cadr p2))))
+
+(defun scalar-pair (s p)
+  (list (* s (car p)) (* s (cadr p))))
